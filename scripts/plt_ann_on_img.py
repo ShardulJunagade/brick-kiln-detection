@@ -4,13 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from PIL import Image
+import shutil
 
 METAINFO = {
 	'classes': ('CFCBK', 'FCBK', 'Zigzag'),
 	'palette': [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
 }
 
-def draw_annotations(image, ann_file, img_size, is_ann_normalized, ann_format='dota', is_label_number=False, add_score=False, is_prediction=False):
+def draw_annotations(image, ann_file, img_size, is_ann_normalized, ann_format='dota', is_label_number=False, is_prediction=False, add_score=False,
+                   score_threshold=0.2):
     """Draws rotated bounding boxes from a DOTA or Supervision annotation file using specified colors."""
     img = image.copy()
     if not os.path.exists(ann_file):
@@ -59,8 +61,11 @@ def draw_annotations(image, ann_file, img_size, is_ann_normalized, ann_format='d
         if add_score and score is not None:
             label_text += f': {score}'
 
-        cv2.polylines(img, [points], isClosed=True, color=color, thickness=1)
-        cv2.putText(img, label_text, (points[0][0], points[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        if not is_prediction or (score is not None and float(score) > score_threshold):
+            cv2.polylines(img, [points], isClosed=True, color=color, thickness=1)
+            cv2.putText(img, label_text, (points[0][0], points[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        else:
+            print(f"Skipping annotation with low score: {score} for {label}")
 
     return img
 
@@ -68,19 +73,29 @@ def draw_annotations(image, ann_file, img_size, is_ann_normalized, ann_format='d
 
 def annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized,
                        ann_format='dota', is_label_number=False, save=True, plot=False,
-                       is_prediction=False, add_score=False): 
+                       is_prediction=False, add_score=False, score_threshold=0.2):
     """Draws rotated bounding boxes from annotation files on images in a directory."""
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir, exist_ok=True)
+    # remove the content of out_dir if it exists
+    if os.path.exists(out_dir):
+        for filename in os.listdir(out_dir):
+            file_path = os.path.join(out_dir, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f'Failed to delete {file_path}. Reason: {e}')
+    os.makedirs(out_dir, exist_ok=True)        
 
     image_files = sorted(os.listdir(image_dir))
     num_images = len(image_files)
 
-    for i, image_name in enumerate(image_files[:10]):
+    for i, image_name in enumerate(image_files):
         print(f'Processing image {i + 1}/{num_images}...')
         image_path = os.path.join(image_dir, image_name)
 
-        if image_name.lower().endswith(('.tif', '.tiff')):
+        if image_name.lower().endswith(('.tif', '.tiff', '.png', '.jpg', '.jpeg')):
             image = np.array(Image.open(image_path).convert('RGB'))
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         else:
@@ -92,7 +107,8 @@ def annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized,
 
         ann_file = os.path.join(ann_dir, f'{os.path.splitext(image_name)[0]}.txt')
         annotated_img = draw_annotations(image, ann_file, img_size, is_ann_normalized,
-                                         ann_format, is_label_number, add_score, is_prediction)
+                                         ann_format, is_label_number, is_prediction, add_score,
+                                         score_threshold)
 
         if save:
             out_path = os.path.join(out_dir, image_name)
@@ -107,10 +123,13 @@ def annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized,
             plt.show()
 
 
-image_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/thera_rdn_pro/bihar_4x/images_png'
-ann_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/thera_rdn_pro/bihar_4x/annfiles'
-out_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/thera_rdn_pro/bihar_4x/annotated'
-img_size = 2560
+image_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/rfdetr/data/bihar_to_test_bihar/test'
+ann_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/data/bihar/val/labels'
+out_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/rfdetr/data/original_test_bihar/annotated_test'
+img_size = 640
+score_threshold = 0.1
+is_prediction = False
+add_score = False
 
 input_format = input("Enter the input format (yolo/dota/supervision): ").strip().lower()
 if input_format == 'yolo' or input_format == 'supervision':
@@ -123,4 +142,4 @@ elif input_format == 'dota':
 	is_label_number = False
 
 
-annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized, ann_format, is_label_number, save=True, plot=True, is_prediction=False)
+annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized, ann_format, is_label_number, save=True, plot=False, is_prediction=is_prediction, add_score=add_score, score_threshold=score_threshold)

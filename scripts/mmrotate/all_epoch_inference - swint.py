@@ -8,7 +8,7 @@ from mmengine.registry import init_default_scope
 from mmdet.apis import inference_detector, init_detector
 from mmrotate.visualization import RotLocalVisualizer
 from mmcv.ops import nms_rotated
-os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1,2,3'
 
 
 def apply_rotated_nms(bboxes, scores, labels, nms_iou_threshold=0.1):
@@ -139,18 +139,18 @@ model_configs = [
     #     'epoch': 50,
     # },
     {
-        'train': 'Gen Delhi NCR (CG)',
-        'test': 'West Bengal',
+        'train': 'Thera Haryana',
+        'test': 'Thera Test Bihar',
         'backbone': 'swint',
         'head': 'rhino',
-        'config_file': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/configs-mine/rhino-swint-dota2config/rhino_phc_haus-4scale_swint_2xb2-36e_gen_delhi_CG_bks.py',
-        'checkpoint_folder': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/work_dirs/rhino_phc_haus-4scale_swint_2xb2-36e_gen_delhi_CG_bks',
-        'checkpoint_file': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/work_dirs/rhino_phc_haus-4scale_swint_2xb2-36e_gen_delhi_CG_bks/epoch_50.pth',
-        'val_dir': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/data/grid_data/wb_small_airshed',
-        'inf_dir': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/results-swint/gen_delhi_to_wb',
-        'img_height': 640,
-        'epoch': 50,
-    }
+        'config_file': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/configs-mine/rhino-swint-dota2config/rhino_phc_haus-4scale_swint_2xb2-36e_thera_haryana.py',
+        'checkpoint_folder': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/work_dirs/rhino_phc_haus-4scale_swint_2xb2-36e_thera_haryana',
+        'checkpoint_file': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/work_dirs/rhino_phc_haus-4scale_swint_2xb2-36e_thera_haryana/epoch_45.pth',
+        'val_dir': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/thera_rdn_pro/test_bihar_4x',
+        'inf_dir': '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/results-swint/thera_haryana_to_test_bihar',
+        'img_height': 2560,
+        'epoch': 35,
+    },
 ]
 
 
