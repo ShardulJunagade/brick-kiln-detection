@@ -7,12 +7,12 @@ from PIL import Image
 import shutil
 
 METAINFO = {
-	'classes': ('CFCBK', 'FCBK', 'Zigzag'),
-	'palette': [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+    'classes': ('CFCBK', 'FCBK', 'Zigzag'),
+    'palette': [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
 }
 
 def draw_annotations(image, ann_file, img_size, is_ann_normalized, ann_format='dota', is_label_number=False, is_prediction=False, add_score=False,
-                   score_threshold=0.2):
+                   score_threshold=0.2, add_label=True):
     """Draws rotated bounding boxes from a DOTA or Supervision annotation file using specified colors."""
     img = image.copy()
     if not os.path.exists(ann_file):
@@ -57,13 +57,18 @@ def draw_annotations(image, ann_file, img_size, is_ann_normalized, ann_format='d
         points = points.astype(int)
         color = class_to_color.get(label, (255, 255, 255))
 
+        # Adjust label font scale and thickness based on image size
+        font_scale = max(0.4, min(2.0, img.shape[0] / 512.0))
+        thickness = max(1, int(img.shape[0] / 512))
+
         label_text = label
         if add_score and score is not None:
             label_text += f': {score}'
 
         if not is_prediction or (score is not None and float(score) > score_threshold):
             cv2.polylines(img, [points], isClosed=True, color=color, thickness=1)
-            cv2.putText(img, label_text, (points[0][0], points[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            if add_label:
+                cv2.putText(img, label_text, (points[0][0], points[0][1] - 5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
         else:
             print(f"Skipping annotation with low score: {score} for {label}")
 
@@ -73,7 +78,7 @@ def draw_annotations(image, ann_file, img_size, is_ann_normalized, ann_format='d
 
 def annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized,
                        ann_format='dota', is_label_number=False, save=True, plot=False,
-                       is_prediction=False, add_score=False, score_threshold=0.2):
+                       is_prediction=False, add_score=False, score_threshold=0.2, add_label=True):
     """Draws rotated bounding boxes from annotation files on images in a directory."""
     # remove the content of out_dir if it exists
     if os.path.exists(out_dir):
@@ -108,7 +113,7 @@ def annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized,
         ann_file = os.path.join(ann_dir, f'{os.path.splitext(image_name)[0]}.txt')
         annotated_img = draw_annotations(image, ann_file, img_size, is_ann_normalized,
                                          ann_format, is_label_number, is_prediction, add_score,
-                                         score_threshold)
+                                         score_threshold, add_label=add_label)
 
         if save:
             out_path = os.path.join(out_dir, image_name)
@@ -123,23 +128,24 @@ def annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized,
             plt.show()
 
 
-image_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/rfdetr/data/bihar_to_test_bihar/test'
-ann_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/RHINO/data/bihar/val/labels'
-out_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/rfdetr/data/original_test_bihar/annotated_test'
-img_size = 640
+image_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/stratified_split/val/images'
+ann_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/stratified_split/val/annfiles'
+out_dir = '/home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/stratified_split/val/annotated_images'
+img_size = 128
 score_threshold = 0.1
 is_prediction = False
 add_score = False
+add_label = False
 
 input_format = input("Enter the input format (yolo/dota/supervision): ").strip().lower()
 if input_format == 'yolo' or input_format == 'supervision':
-	is_ann_normalized = True
-	ann_format = 'supervision'
-	is_label_number = True
+    is_ann_normalized = True
+    ann_format = 'supervision'
+    is_label_number = True
 elif input_format == 'dota':
-	is_ann_normalized = False
-	ann_format = 'dota'
-	is_label_number = False
+    is_ann_normalized = False
+    ann_format = 'dota'
+    is_label_number = False
 
 
-annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized, ann_format, is_label_number, save=True, plot=False, is_prediction=is_prediction, add_score=add_score, score_threshold=score_threshold)
+annotate_directory(image_dir, ann_dir, out_dir, img_size, is_ann_normalized, ann_format, is_label_number, save=True, plot=False, is_prediction=is_prediction, add_score=add_score, score_threshold=score_threshold, add_label=add_label)

@@ -4,6 +4,7 @@ models/
 runs/
 RHINO/
 data/
+.vscode/
 
 
 # Byte-compiled / optimized / DLL files

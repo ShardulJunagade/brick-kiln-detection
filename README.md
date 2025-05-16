@@ -1,1 +1,1 @@
-# domain-adaptation-brick-kilns
+# brick-kilns-detection
