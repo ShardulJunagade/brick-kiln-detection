@@ -1,0 +1,8 @@
+path: /home/shardul.junagade/my-work/domain-adaptation-brick-kilns/data/thera_rdn_pro
+
+train: delhi_ncr_4x/images
+val: wb_small_airshed_4x/images
+
+nc: 3
+
+names: ['CFCBK', 'FCBK', 'Zigzag']
