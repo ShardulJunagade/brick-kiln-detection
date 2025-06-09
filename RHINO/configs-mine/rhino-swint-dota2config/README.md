@@ -1,0 +1,1 @@
+These configs are inspired from DOTA2 configs provided by the RHINO authors.
